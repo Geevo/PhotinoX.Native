@@ -25,9 +25,7 @@ PlatformString g_webview2RuntimePath;
 
 namespace
 {
-    WebView2EnvironmentSharingKey BuildWebView2EnvironmentSharingKey(
-        const PlatformString& runtimePath,
-        const PlatformString& userDataFolder)
+    WebView2EnvironmentSharingKey BuildWebView2EnvironmentSharingKey(const PlatformString& runtimePath, const PlatformString& userDataFolder)
     {
         WebView2EnvironmentSharingKey key;
         key.runtimePath = runtimePath;
@@ -35,9 +33,7 @@ namespace
         return key;
     }
 
-    WebView2EnvironmentKey BuildWebView2EnvironmentKey(
-        const PlatformString& additionalBrowserArguments,
-        const std::vector<PlatformString>& customSchemeNames)
+    WebView2EnvironmentKey BuildWebView2EnvironmentKey(const PlatformString& additionalBrowserArguments, const std::vector<PlatformString>& customSchemeNames)
     {
         WebView2EnvironmentKey key;
 
@@ -60,8 +56,31 @@ namespace
         Normalize(key);
         return key;
     }
-}
 
+    bool EnableTransparentWindowStyle(HWND hwnd) noexcept
+    {
+        assert(hwnd);
+        if (!hwnd) return false;
+
+        SetLastError(ERROR_SUCCESS);
+        const LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+
+        if (style == 0 && GetLastError() != ERROR_SUCCESS)
+            return false;
+
+        if ((style & WS_EX_LAYERED) != 0)
+            return true;
+
+        SetLastError(ERROR_SUCCESS);
+        const LONG_PTR previousStyle = SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style | WS_EX_LAYERED);
+
+        if (previousStyle == 0 && GetLastError() != ERROR_SUCCESS)
+            return false;
+
+        return SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED) != FALSE;
+    }
+
+} // namespace
 
 void Photino::GetTransparentEnabled(bool* enabled) const
 {
@@ -70,36 +89,53 @@ void Photino::GetTransparentEnabled(bool* enabled) const
 
     *enabled = options_.transparentEnabled;
 
-    if (!platform_->webViewController) return;
+    if (!platform_->hWnd || !platform_->webViewController)
+        return;
+
+    const LONG_PTR extendedStyle = GetWindowLongPtrW(platform_->hWnd, GWL_EXSTYLE);
+    const bool windowTransparent = (extendedStyle & WS_EX_LAYERED) != 0;
 
     wil::com_ptr<ICoreWebView2Controller2> controller2;
-    if (FAILED(platform_->webViewController->QueryInterface(&controller2)) || !controller2) return;
+    if (FAILED(platform_->webViewController->QueryInterface(&controller2)) || !controller2)
+        return;
 
     COREWEBVIEW2_COLOR backgroundColor{};
-    if (SUCCEEDED(controller2->get_DefaultBackgroundColor(&backgroundColor)))
-        *enabled = (backgroundColor.A == 0);
+    if (FAILED(controller2->get_DefaultBackgroundColor(&backgroundColor)))
+        return;
+
+    *enabled = windowTransparent && backgroundColor.A == 0;
 }
 
 void Photino::SetTransparentEnabled(const bool enabled)
 {
-    options_.transparentEnabled = enabled;
+    assert(platform_->hWnd);
+    assert(platform_->webViewController);
+    if (!platform_->hWnd || !platform_->webViewController)
+        return;
 
-    assert(platform_->webViewController && platform_->webViewWindow);
-    if (!platform_->webViewController || !platform_->webViewWindow) return;
+    if (enabled && !options_.chromeless)
+    {
+        assert(false);
+        return;
+    }
 
     wil::com_ptr<ICoreWebView2Controller2> controller2;
-    if (FAILED(platform_->webViewController->QueryInterface(&controller2)) || !controller2) return;
+    if (FAILED(platform_->webViewController->QueryInterface(&controller2)) || !controller2)
+        return;
+
+    if (enabled && !EnableTransparentWindowStyle(platform_->hWnd))
+        return;
 
     COREWEBVIEW2_COLOR backgroundColor{};
-    HRESULT hr = controller2->get_DefaultBackgroundColor(&backgroundColor);
-    if (FAILED(hr)) return;
+    if (FAILED(controller2->get_DefaultBackgroundColor(&backgroundColor)))
+        return;
 
     backgroundColor.A = enabled ? 0 : 255;
+    if (FAILED(controller2->put_DefaultBackgroundColor(backgroundColor)))
+        return;
 
-    hr = controller2->put_DefaultBackgroundColor(backgroundColor);
-    if (FAILED(hr)) return;
-
-    ReloadWebView();
+    options_.transparentEnabled = enabled;
+    RedrawWindow(platform_->hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
 }
 
 void Photino::ClearBrowserAutoFill() const

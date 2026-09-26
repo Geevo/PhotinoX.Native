@@ -143,16 +143,16 @@ Photino::Photino(PhotinoInitParams* initParams) : platform_(std::make_unique<Win
 
     HWND ownerHwnd = initParams->Window.UseNativeWindowOwner && parent_ ? parent_->GetHwnd() : nullptr;
 
-    //Create the window
-    HWND hWnd = CreateWindowExW(
-        options_.transparentEnabled ? WS_EX_LAYERED : 0,        // WS_EX_OVERLAPPEDWINDOW, //An optional extended window style.
-        CLASS_NAME,                                             // Window class
-        options_.windowTitle.c_str(),                           // Window text
-        options_.chromeless ? WS_POPUP : WS_OVERLAPPEDWINDOW,   // Window style
+    const DWORD windowStyle = options_.chromeless ? WS_POPUP : WS_OVERLAPPEDWINDOW;
+    const DWORD extendedStyle = options_.transparentEnabled && options_.chromeless ? WS_EX_LAYERED : 0;
 
+    assert(options_.chromeless == initParams->Window.Chromeless);
+
+    //wprintf(L"Chromeless: %d, Transparent: %d, Style: 0x%08X, ExStyle: 0x%08X\n", options_.chromeless, options_.transparentEnabled, windowStyle, extendedStyle);
+
+    HWND hWnd = CreateWindowExW(extendedStyle, CLASS_NAME,  options_.windowTitle.c_str(), windowStyle,
         // Size and position
         initParams->Geometry.Left, initParams->Geometry.Top, initParams->Geometry.Width, initParams->Geometry.Height,
-
         ownerHwnd,  // Parent window handle
         nullptr,    // Menu
         g_hInstance,// Instance handle

@@ -315,6 +315,25 @@ namespace
         return FALSE;
     }
 
+    void ConfigureWindowVisual(GtkWidget* widget)
+    {
+        assert(widget);
+
+        GdkScreen* screen = gtk_widget_get_screen(widget);
+        if (!screen) return;
+
+        GdkVisual* visual = gdk_screen_get_rgba_visual(screen);
+        if (!visual) return;
+
+        gtk_widget_set_visual(widget, visual);
+        gtk_widget_set_app_paintable(widget, TRUE);
+    }
+
+    void WindowScreenChanged(GtkWidget* widget, GdkScreen*, gpointer)
+    {
+        ConfigureWindowVisual(widget);
+    }
+
 } //namespace
 
 
@@ -371,6 +390,9 @@ Photino::Photino(PhotinoInitParams* initParams) : platform_(std::make_unique<Lin
     platform_->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     if (!platform_->window)
         std::abort();
+
+    g_signal_connect(platform_->window, "screen-changed", G_CALLBACK(WindowScreenChanged), nullptr);
+    ConfigureWindowVisual(platform_->window);
 
     dialog_ = new PhotinoDialog();
 
@@ -451,9 +473,6 @@ Photino::Photino(PhotinoInitParams* initParams) : platform_(std::make_unique<Lin
     g_signal_connect(platform_->window, "delete-event", G_CALLBACK(on_widget_deleted), this);
     g_signal_connect(platform_->window, "destroy", G_CALLBACK(on_widget_destroyed), this);
 
-    if (options_.transparentEnabled)
-        SetTransparentEnabled(true);//visual/app-paintable
-
     if (!EnsureWebViewAttached())
         std::abort();
 
@@ -479,7 +498,7 @@ Photino::Photino(PhotinoInitParams* initParams) : platform_(std::make_unique<Lin
     }
 
     if (options_.transparentEnabled)
-        SetTransparentEnabled(true); // WebKit background alpha
+        SetTransparentEnabled(true);
 
     suppressWindowStateCallbacks_ = false;
 

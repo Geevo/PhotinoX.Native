@@ -322,34 +322,25 @@ void Photino::GetTransparentEnabled(bool* enabled) const
     if (!enabled) return;
 
     *enabled = options_.transparentEnabled;
+
+    if (!platform_->webview) return;
+
+    GdkRGBA color{};
+    webkit_web_view_get_background_color(WEBKIT_WEB_VIEW(platform_->webview), &color);
+    *enabled = color.alpha == 0.0;
 }
 
 void Photino::SetTransparentEnabled(bool enabled)
 {
-    options_.transparentEnabled = enabled;
-
-    assert(platform_->window);
-    if (!platform_->window) return;
-
-    gtk_window_set_decorated(GTK_WINDOW(platform_->window), !options_.chromeless && !enabled); // hide/show window chrome
-
-    GdkScreen* screen = gtk_window_get_screen(GTK_WINDOW(platform_->window));
-    if (!screen) return;
-
-    GdkVisual* rgbaVisual = gdk_screen_get_rgba_visual(screen);
-    if (!rgbaVisual) return;
-
-    gtk_widget_set_visual(GTK_WIDGET(platform_->window), rgbaVisual);
-    gtk_widget_set_app_paintable(GTK_WIDGET(platform_->window), true);
-
+    assert(platform_->webview);
     if (!platform_->webview) return;
 
-    GdkRGBA color;
+    GdkRGBA color{};
     webkit_web_view_get_background_color(WEBKIT_WEB_VIEW(platform_->webview), &color);
-
-    color.alpha = enabled ? 0 : 1;
-
+    color.alpha = enabled ? 0.0 : 1.0;
     webkit_web_view_set_background_color(WEBKIT_WEB_VIEW(platform_->webview), &color);
+
+    options_.transparentEnabled = enabled;
 }
 
 void Photino::ClearBrowserAutoFill() const
