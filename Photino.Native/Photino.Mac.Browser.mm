@@ -67,25 +67,6 @@ namespace
         }
     }
 
-    bool GetWebViewDrawsBackground(WKWebView* webView, bool& drawsBackground)
-    {
-        assert(webView);
-        if (!webView) return false;
-
-        @try
-        {
-            id value = [webView valueForKey:@"drawsBackground"];
-            if (![value isKindOfClass:[NSNumber class]]) return false;
-
-            drawsBackground = [static_cast<NSNumber*>(value) boolValue];
-            return true;
-        }
-        @catch (NSException*)
-        {
-            return false;
-        }
-    }
-
 } // namespace
 
 void Photino::ConfigureWebViewPreferences()
@@ -154,12 +135,9 @@ void Photino::GetTransparentEnabled(bool* enabled) const
 
     *enabled = options_.transparentEnabled;
 
-    if (!platform_->window || !platform_->webView) return;
+    if (!platform_->window) return;
 
-    bool drawsBackground = true;
-    if (!GetWebViewDrawsBackground(platform_->webView, drawsBackground)) return;
-
-    *enabled = ![platform_->window isOpaque] && !drawsBackground;
+    *enabled = ![platform_->window isOpaque];
 }
 
 void Photino::SetTransparentEnabled(bool enabled)
@@ -167,31 +145,13 @@ void Photino::SetTransparentEnabled(bool enabled)
     assert(platform_->window && platform_->webView);
     if (!platform_->window || !platform_->webView) return;
 
-    const bool previousOpaque = [platform_->window isOpaque];
-    NSColor* previousBackgroundColor = [[platform_->window backgroundColor] retain];
-
-    if (!SetWebViewDrawsBackground(platform_->webView, !enabled))
-    {
-        [previousBackgroundColor release];
+    if (enabled && !SetWebViewDrawsBackground(platform_->webView, false))
         return;
-    }
 
     [platform_->window setOpaque:!enabled];
     [platform_->window setBackgroundColor:enabled ? [NSColor clearColor] : [NSColor windowBackgroundColor]];
+    [platform_->window invalidateShadow];
 
-    bool drawsBackground = true;
-    const bool applied = GetWebViewDrawsBackground(platform_->webView, drawsBackground) && drawsBackground == !enabled;
-
-    if (!applied)
-    {
-        SetWebViewDrawsBackground(platform_->webView, !options_.transparentEnabled);
-        [platform_->window setOpaque:previousOpaque];
-        [platform_->window setBackgroundColor:previousBackgroundColor];
-        [previousBackgroundColor release];
-        return;
-    }
-
-    [previousBackgroundColor release];
     options_.transparentEnabled = enabled;
 }
 

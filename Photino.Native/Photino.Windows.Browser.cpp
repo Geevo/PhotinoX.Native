@@ -57,29 +57,6 @@ namespace
         return key;
     }
 
-    bool EnableTransparentWindowStyle(HWND hwnd) noexcept
-    {
-        assert(hwnd);
-        if (!hwnd) return false;
-
-        SetLastError(ERROR_SUCCESS);
-        const LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
-
-        if (style == 0 && GetLastError() != ERROR_SUCCESS)
-            return false;
-
-        if ((style & WS_EX_LAYERED) != 0)
-            return true;
-
-        SetLastError(ERROR_SUCCESS);
-        const LONG_PTR previousStyle = SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style | WS_EX_LAYERED);
-
-        if (previousStyle == 0 && GetLastError() != ERROR_SUCCESS)
-            return false;
-
-        return SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED) != FALSE;
-    }
-
 } // namespace
 
 void Photino::GetTransparentEnabled(bool* enabled) const
@@ -113,17 +90,19 @@ void Photino::SetTransparentEnabled(const bool enabled)
     if (!platform_->hWnd || !platform_->webViewController)
         return;
 
-    if (enabled && !options_.chromeless)
+    if (enabled)
     {
-        assert(false);
-        return;
+        if (!options_.chromeless)
+            return;
+
+        const LONG_PTR extendedStyle = GetWindowLongPtrW(platform_->hWnd, GWL_EXSTYLE);
+
+        if ((extendedStyle & WS_EX_LAYERED) == 0)
+            return;
     }
 
     wil::com_ptr<ICoreWebView2Controller2> controller2;
     if (FAILED(platform_->webViewController->QueryInterface(&controller2)) || !controller2)
-        return;
-
-    if (enabled && !EnableTransparentWindowStyle(platform_->hWnd))
         return;
 
     COREWEBVIEW2_COLOR backgroundColor{};
