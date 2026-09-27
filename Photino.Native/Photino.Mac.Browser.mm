@@ -134,10 +134,6 @@ void Photino::GetTransparentEnabled(bool* enabled) const
     if (!enabled) return;
 
     *enabled = options_.transparentEnabled;
-
-    if (!platform_->window) return;
-
-    *enabled = ![platform_->window isOpaque];
 }
 
 void Photino::SetTransparentEnabled(bool enabled)
@@ -145,11 +141,12 @@ void Photino::SetTransparentEnabled(bool enabled)
     assert(platform_->window && platform_->webView);
     if (!platform_->window || !platform_->webView) return;
 
-    if (enabled && !SetWebViewDrawsBackground(platform_->webView, false))
+    if (!SetWebViewDrawsBackground(platform_->webView, false))
         return;
 
-    [platform_->window setOpaque:!enabled];
+    [platform_->window setOpaque:NO];
     [platform_->window setBackgroundColor:enabled ? [NSColor clearColor] : [NSColor windowBackgroundColor]];
+    [platform_->window displayIfNeeded];
     [platform_->window invalidateShadow];
 
     options_.transparentEnabled = enabled;
