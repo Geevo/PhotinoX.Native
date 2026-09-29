@@ -142,6 +142,7 @@ void Photino::ClearBrowserAutoFill() const
                                      Callback<ICoreWebView2ClearBrowsingDataCompletedHandler>(
                                          [](HRESULT error) -> HRESULT
                                          {
+                                             assert(SUCCEEDED(error));
                                              return S_OK;
                                          })
                                          .Get());

@@ -9,26 +9,24 @@ using namespace PhotinoX::Native;
 
 extern "C"
 {
+    PHOTINO_EXPORT void* Photino_GetWindowHandle(const Photino* instance)
+    {
+        assert(instance);
+        if (!instance) return nullptr;
+
 #ifdef _WIN32
-
-    PHOTINO_EXPORT HWND Photino_getHwnd_win32(const Photino* instance)
-    {
-        assert(instance);
-        if (!instance) return nullptr;
-
         return instance->GetHwnd();
-    }
-
 #elif defined(__linux__)
-
-    PHOTINO_EXPORT void* Photino_getGtkWidget_linux(const Photino* instance)
-    {
-        assert(instance);
-        if (!instance) return nullptr;
-
         return instance->GetGtkWidget();
+#elif defined(__APPLE__)
+        return instance->GetNSWindow();
+#else
+        return nullptr;
+#endif
     }
 
+
+#ifdef __linux__
     PHOTINO_EXPORT void Photino_SetChromelessDragRegions_linux(Photino* instance,
         const LayoutRegion* dragRegions, const int dragRegionCount,
         const LayoutRegion* noDragRegions, const int noDragRegionCount)
@@ -47,17 +45,6 @@ extern "C"
 
         instance->SetLinuxChromelessResizeBorderThickness(thickness);
     }
-
-#elif defined(__APPLE__)
-
-    PHOTINO_EXPORT void* Photino_getNSWindow_mac(const Photino* instance)
-    {
-        assert(instance);
-        if (!instance) return nullptr;
-
-        return instance->GetNSWindow();
-    }
-
 #endif
 
     PHOTINO_EXPORT bool Photino_Show(Photino* instance)
