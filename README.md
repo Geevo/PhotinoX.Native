@@ -156,6 +156,12 @@ make mac-universal
 
 Issues and PRs are welcome. Keep changes minimal and performance-conscious.
 
+## Contributors
+
+<a href="https://github.com/ivanvoyager/PhotinoX.Native/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ivanvoyager/PhotinoX.Native" />
+</a>
+
 ## License
 
-PhotinoX.Native is licensed under **Apache-2.0**.  
+PhotinoX.Native is licensed under **Apache-2.0**.
