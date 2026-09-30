@@ -25,27 +25,33 @@ extern "C"
 #endif
     }
 
-
-#ifdef __linux__
-    PHOTINO_EXPORT void Photino_SetChromelessDragRegions_linux(Photino* instance,
+    PHOTINO_EXPORT bool Photino_SetChromelessDragRegions(Photino* instance,
         const LayoutRegion* dragRegions, const int dragRegionCount,
         const LayoutRegion* noDragRegions, const int noDragRegionCount)
     {
         assert(instance);
-        if (!instance) return;
+        if (!instance) return false;
 
-        instance->SetLinuxChromelessDragRegions(dragRegions, dragRegionCount, 
-                                                noDragRegions, noDragRegionCount);
+#ifdef __linux__
+        instance->SetLinuxChromelessDragRegions(dragRegions, dragRegionCount, noDragRegions, noDragRegionCount);
+        return true;
+#else
+        return false;
+#endif
     }
 
-    PHOTINO_EXPORT void Photino_SetChromelessResizeBorderThickness_linux(Photino* instance, const int thickness)
+    PHOTINO_EXPORT bool Photino_SetChromelessResizeBorderThickness(Photino* instance, const int thickness)
     {
         assert(instance);
-        if (!instance) return;
+        if (!instance) return false;
 
+#ifdef __linux__
         instance->SetLinuxChromelessResizeBorderThickness(thickness);
-    }
+        return true;
+#else
+        return false;
 #endif
+    }
 
     PHOTINO_EXPORT bool Photino_Show(Photino* instance)
     {
