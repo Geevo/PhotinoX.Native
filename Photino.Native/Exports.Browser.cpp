@@ -224,12 +224,13 @@ extern "C"
         instance->GetIgnoreCertificateErrorsEnabled(disabled);
     }
 
-#ifdef _WIN32
-
-    PHOTINO_EXPORT void Photino_setWebView2RuntimePath_win32(const wchar_t* webView2RuntimePath)
+    PHOTINO_EXPORT bool Photino_SetWebView2RuntimePath(Utf8String webView2RuntimePath)
     {
-        Photino::SetWebView2RuntimePath(webView2RuntimePath ? PlatformString(webView2RuntimePath) : PlatformString());
-    }
-
+#ifdef _WIN32
+        Photino::SetWebView2RuntimePath(ToPlatformString(webView2RuntimePath));
+        return true;
+#else
+        return false;
 #endif
+    }
 }
