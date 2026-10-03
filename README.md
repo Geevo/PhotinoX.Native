@@ -3,7 +3,7 @@
 # PhotinoX.Native
 
 [![NuGet Version](https://img.shields.io/nuget/v/PhotinoX.Native.svg)](https://www.nuget.org/packages/PhotinoX.Native)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ivanvoyager/PhotinoX.Native)
+[![Ask DeepWiki](https://img.shields.io/badge/Ask-DeepWiki-blue)](https://deepwiki.com/ivanvoyager/PhotinoX.Native)
 [![Build (Windows)](https://github.com/ivanvoyager/PhotinoX.Native/actions/workflows/build-native-win.yml/badge.svg)](https://github.com/ivanvoyager/PhotinoX.Native/actions/workflows/build-native-win.yml)
 [![Build (Unix)](https://github.com/ivanvoyager/PhotinoX.Native/actions/workflows/build-native-unix.yml/badge.svg)](https://github.com/ivanvoyager/PhotinoX.Native/actions/workflows/build-native-unix.yml)
 [![License](https://img.shields.io/github/license/ivanvoyager/PhotinoX.Native?label=license)](https://github.com/ivanvoyager/PhotinoX.Native/blob/master/LICENSE)
